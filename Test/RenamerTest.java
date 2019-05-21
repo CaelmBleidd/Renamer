@@ -23,6 +23,7 @@ public class RenamerTest {
     public void before() {
         renamer = new Renamer();
         directory = new File("testDirectory");
+        directory.mkdir();
     }
 
     @After
@@ -45,7 +46,7 @@ public class RenamerTest {
             expectedNames.add(fileName + ".2019");
         }
         for (var name : fileNames) {
-            assertTrue(new File(directory + "/" + name).createNewFile());
+            assertTrue(new File(directory, name).createNewFile());
         }
 
         renamer.process(directory.toPath());
@@ -56,37 +57,41 @@ public class RenamerTest {
     }
 
     private List<String> getFiles(File directory) throws IOException {
-        return Files.walk(directory.toPath())
-             .filter(Files::isRegularFile)
-             .map(Path::toString)
-             .map(name -> name.substring(name.lastIndexOf("/") + 1))
-             .collect(Collectors.toList());
+        try (var stream = Files.walk(directory.toPath())) {
+            return stream.filter(Files::isRegularFile)
+                         .map(Path::toString)
+                         .map(name -> name.substring(name.lastIndexOf("/") + 1))
+                         .collect(Collectors.toList());
+        }
     }
 
     @Test
     public void directoryJava() throws IOException {
-        File file = new File(directory + "/" + "hello.java");
+        File file = new File(directory, "hello.java");
         assertTrue(file.mkdir());
-        File fileJava = new File(directory + "/" + "hello.java/.java");
+        File fileJava = new File(directory, "hello.java/.java");
         assertTrue(fileJava.createNewFile());
-        String expected = ".java";
-        renamer.process(Paths.get(directory  + "/" + "hello.java"));
+
+        // Filename that you're expected depends on type of ".java" file. I think it's correct java file
+        String expected = ".java.2019";
+        renamer.process(Paths.get(directory + "/" + "hello.java"));
         var files = getFiles(file);
 
-        assertEquals( 1, files.size());
+        assertEquals(1, files.size());
         assertEquals(expected, files.get(0));
     }
 
     private void deleteDirectoryStream(Path path) throws IOException {
-        Files.walk(path)
-             .sorted(Comparator.reverseOrder())
-             .map(Path::toFile)
-             .forEach(File::delete);
+        try (var stream = Files.walk(path)) {
+            stream.sorted(Comparator.reverseOrder())
+                  .map(Path::toFile)
+                  .forEach(File::delete);
+        }
     }
 
     @Test
     public void renameJava() throws IOException {
-        File file = new File(directory + "/" + "test.java");
+        File file = new File(directory, "test.java");
         assertTrue(file.createNewFile());
         renamer.process(file.toPath());
         var elems = getFiles(directory);
@@ -96,8 +101,8 @@ public class RenamerTest {
 
     @Test
     public void renameKt() throws IOException {
-        File file = new File(directory + "/" + "test.kt");
-        assertTrue(file.createNewFile());
+        File file = new File(directory, "test.kt");
+        file.createNewFile();
         renamer.process(file.toPath());
         var elems = getFiles(directory);
         assertEquals(1, elems.size());
@@ -106,7 +111,7 @@ public class RenamerTest {
 
     @Test
     public void renameHaskellFiles() throws IOException {
-        File file = new File(directory + "/" + "test.hs");
+        File file = new File(directory, "test.hs");
         assertTrue(file.createNewFile());
         renamer.process(file.toPath());
         var elems = getFiles(directory);
@@ -116,7 +121,7 @@ public class RenamerTest {
 
     @Test
     public void renameJavaWithoutDot() throws IOException {
-        File file = new File(directory + "/" + "testjava");
+        File file = new File(directory, "testjava");
         assertTrue(file.createNewFile());
         renamer.process(file.toPath());
         var elems = getFiles(directory);
@@ -184,7 +189,7 @@ public class RenamerTest {
         renamer.process(directory.toPath());
         List<String> foundNames = getFiles(directory);
 
-        assertEquals( expectedNames.size(), foundNames.size());
+        assertEquals(expectedNames.size(), foundNames.size());
         assertTrue(foundNames.containsAll(expectedNames) && expectedNames.containsAll(foundNames));
     }
 }

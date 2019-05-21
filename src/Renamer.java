@@ -1,19 +1,20 @@
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.SQLOutput;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class Renamer {
 
-    public void process(Path path) {
-        try {
-            Files.walk(path)
-                 .filter(Files::isRegularFile)
-                 .map(Path::toString)
-                 .filter(fileName -> fileName.endsWith(".java") || fileName.endsWith(".kt"))
-                 .filter(fileName -> fileName.charAt(fileName.lastIndexOf("/") + 1) != '.')
-                 .forEach(this::renameFile);
+    // In this method I think that ".java" and ".kt" are correct java and kotlin files, because idea recognizes them like that
+    void process(Path path) {
+        try (var stream = Files.walk(path)) {
+            stream.filter(Files::isRegularFile)
+                  .map(Path::toString)
+                  .filter(fileName -> fileName.endsWith(".java") || fileName.endsWith(".kt"))
+//                 .filter(fileName -> !fileName.substring(fileName.lastIndexOf("/")).equals(".java") &&
+//                                     !fileName.substring(fileName.lastIndexOf("/")).equals(".kt"))
+                  .forEach(this::renameFile);
+
         } catch (IOException e) {
             System.err.println("An error occurred during walking directory " + path);
             System.err.println("Message: " + e.getMessage());
