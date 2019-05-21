@@ -5,17 +5,17 @@ import java.nio.file.Paths;
 public class Main {
     public static void main(String[] args) {
         if (args.length != 1) {
-            System.out.println("Expected one argument, found " + args.length);
+            System.err.println("Expected one argument, found " + args.length);
             return;
         }
 
         if (args[0] == null) {
-            System.out.println("Required non-null argument.");
+            System.err.println("Required non-null argument.");
             return;
         }
 
         if (!Files.exists(Paths.get(args[0]))) {
-            System.out.println("Path " + args[0] + " doesn't exist.");
+            System.err.println("Path " + args[0] + " doesn't exist.");
             return;
         }
 
