@@ -11,8 +11,6 @@ public class Renamer {
             stream.filter(Files::isRegularFile)
                   .map(Path::toString)
                   .filter(fileName -> fileName.endsWith(".java") || fileName.endsWith(".kt"))
-//                 .filter(fileName -> !fileName.substring(fileName.lastIndexOf("/")).equals(".java") &&
-//                                     !fileName.substring(fileName.lastIndexOf("/")).equals(".kt"))
                   .forEach(this::renameFile);
 
         } catch (IOException e) {
